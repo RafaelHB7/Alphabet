@@ -1,0 +1,130 @@
+<html>
+    <head>
+        <title>Alphabet</title>
+        <style>
+            span {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            input {
+                border: solid 1px green;
+                box-shadow: 0 0 5px green;
+                padding: 10px;
+                outline: none;
+            }
+            div {
+                height: 50px;
+                overflow: visible;
+                display: flex;
+                flex-direction: column-reverse;
+            }
+            img {
+                height: 32px;
+                width: 32px;
+                position: absolute;
+                top: calc(100vh - 32px);
+                left: calc(100vw - 32px);
+            }
+            body.dark {
+                background-color: #323232;
+            }
+            input.dark {
+                background-color: #323232;
+                color: white;
+            }
+            p.dark {
+                color: white;
+            }
+            p#pb {
+                color: green;
+                height: 18px;
+            }
+        </style>
+    </head>
+    <body>
+        <span>
+            <div id="log"></div>
+            <p id="time">00:00</p>
+            <input type="text" maxlength="26" placeholder="abcdefghijklmnopqrstuvwxyz">
+            <p id="pb"></p>
+        </span>
+        <img src="./cat.webp" alt="cat">
+        <script>
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            const input = document.querySelector('input');
+            const timer = document.querySelector('p#time');
+            const log = document.querySelector('div#log');
+            const pb = document.querySelector('p#pb');
+            const storedpb = localStorage.getItem('pb');
+            let startTime=0;
+            let interval;
+            if (storedpb != null) pb.innerHTML = storedpb;
+            function start() {
+                interval = setInterval(function() {
+                    if (startTime!=0) {
+                        let time=Date.now()-startTime, milliseconds=time%1000/10|0, seconds=time/1000|0;
+                        timer.innerHTML=timerHtml(seconds, milliseconds);
+                    }
+                }, 10);
+            }
+            start();
+            function stopTimer() {
+                log.prepend(createLog());
+                reset();
+            }
+            function timerHtml(s, m) {
+                return String(s).padStart(2, '0')+':'+String(m).padStart(2, '0');
+            }
+            function createLog() {
+                let p = document.createElement('p');
+                p.innerHTML=timer.innerHTML;
+                p.style.color=input.style.borderColor;
+                checkPB(p);
+                return p;
+            }
+            function reset() {
+                input.value='';
+                timer.innerHTML='00:00';
+                startTime=0;
+                start();
+            }
+            function changeBorderColor(color) {
+                input.style.borderColor = color;
+                input.style.boxShadow = '0 0 5px '+color;
+            }
+            function checkPB(element) {
+                if (input.style.borderColor === 'green' && (pb.innerHTML === '' || getScore(pb) > getScore(element))) newPersonalBest(element);
+            }
+            function getScore(element) {
+                return ~~element.innerHTML.replace(/:/,'');
+            }
+            function newPersonalBest(element) {
+                const pbtime = element.innerHTML;
+                pb.innerHTML = pbtime;
+                localStorage.setItem('pb', pbtime);
+            }
+            function toggleDark() {
+                document.querySelectorAll('body, input, p#time').forEach(el => el.classList.toggle('dark'));
+            }
+            input.addEventListener('keyup', function(e) {
+                if (startTime===0) startTime = Date.now();
+                if (e.key==='Enter') changeBorderColor('red'), stopTimer();
+                if (alphabet.startsWith(input.value)) {
+                    changeBorderColor('green');
+                } else {
+                    changeBorderColor('red');  
+                }
+                if (input.value.length===26) stopTimer();
+            });
+            input.addEventListener('keydown', function(e) {
+                if (input.value.length===25 && e.key.length===1 || e.key==='Enter') clearInterval(interval);
+            });
+            document.querySelector('img').addEventListener('click', toggleDark);
+        </script>
+    </body>
+</html>
